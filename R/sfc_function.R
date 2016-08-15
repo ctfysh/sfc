@@ -39,6 +39,8 @@ NULL
 #' @param flow.name a single value of characters. It is the label or
 #'    name of flow which will be used in the "model" file. The details
 #'    of \code{flow.name} are given under "Details".
+#' @param ...	Further arguments to be passed to both \code{\link{read.csv}}
+#'    and \code{\link{scan}}.
 #'
 #' @details There are two important inputs in \code{sfc} function: \code{data}
 #'    and \code{model}. "data" is a table in the form of ".csv" which includes
@@ -91,9 +93,13 @@ NULL
 #'
 #' @examples
 #' library(sfc)
+#' ## model as txt
 #' data <- system.file("extdata", "data_utf8.csv", package = "sfc")
 #' model <- system.file("extdata", "model_utf8.txt", package = "sfc")
-#' sfc(data, model, sample.size=100, rand.seed=123)
+#' sfc(data, model, sample.size = 100, rand.seed = 123, fileEncoding = "UTF-8")
+#' ## model as csv
+#' model <- system.file("extdata", "model_utf8.csv", package = "sfc")
+#' sfc(data, model, sample.size = 1, fileEncoding = "UTF-8")
 #' @export
 sfc <- function(data,
                 model,
@@ -101,16 +107,21 @@ sfc <- function(data,
                 rand.seed = 123,
                 check = TRUE,
                 inner = FALSE,
-                flow.name = "PF") {
+                flow.name = "PF",
+                ...) {
   if (is.character(data)) {
-    data <- read.csv(data)
+    data <- read.csv(data, ...)
   }
-  if (!any(grepl("(=|<-)", model))) {
+  if (any(grepl("*.csv$", model))) {
+    model <- read.csv(model, ...)
+  } else if (!any(grepl("(=|<-)", model))) {
     model <- scan(model,
                   character(),
                   comment.char = "#",
-                  quiet = FALSE,
                   skipNul = TRUE)
+  }
+  if (is.data.frame(model)) {
+    model <- model_csv2txt(model, flow.name)
   }
   data <- imp(data)
   node <- data.frame(NAME = gnode(model))

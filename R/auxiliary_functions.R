@@ -33,7 +33,10 @@ if (getRversion() >= "2.15.1") {
     "MEAN",
     "NAME",
     "SAMPLE",
-    "SD"
+    "SD",
+    "START",
+    "END",
+    "FUN"
   ))
 }
 
@@ -81,6 +84,47 @@ imp <- function(x) {
       names(.) <- gsub("\\.1", "", names(.))
       .
     } %>% ungroup() %>% as.data.frame()
+}
+
+## Model from txt to csv
+model_txt2csv <- function(txt) {
+  data.frame(FUN = txt) %>%
+    mutate(FUN = ifelse(grepl("#", FUN),
+                        gsub("(^#+ |^#+)", "", FUN),
+                        gsub(" ", "", FUN))) %>%
+    separate(FUN, c("ID", "FUN"), "(=|<-)") %>%
+    mutate(ID = gsub("(\\[|,|\\,]|)", "", ID),
+           ID = gsub("(\"|')$", "", ID)) %>%
+    separate(ID, c("NAME", "START", "END"), "(\"|')+") %>%
+    mutate(NAME = ifelse(
+      !is.na(START) | !is.na(END),
+      paste(NAME,
+            cumsum(!is.na(START) | !is.na(END)),
+            sep = "_"),
+      NAME
+    ))
+}
+
+## Model from csv to txt
+model_csv2txt <- function(csv, flow.name = "PF") {
+  csv %>% mutate(
+    ID = ifelse(
+      !START %in% c("", NA) | !END %in% c("", NA),
+      paste0(flow.name,
+             "[\"",
+             START,
+             "\",\"",
+             END,
+             "\",]=",
+             NAME,
+             "=",
+             FUN),
+      ifelse(NAME != "",
+             paste("##", NAME),
+             "")
+    ),
+    ID = gsub("'", "\"", ID)
+  ) %>% with(ID)
 }
 
 ## Round table

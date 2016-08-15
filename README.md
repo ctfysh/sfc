@@ -7,7 +7,8 @@ The R package **sfc** is a tool for substance flow computation, which can finall
 You can use **devtools** to install the development version from Github:
 
 ```r
-devtools::install_github('ctfysh/sfc')
+install.packages("devtools")
+devtools::install_github("ctfysh/sfc")
 ```
 
 ## License

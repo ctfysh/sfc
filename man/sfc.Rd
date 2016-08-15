@@ -5,7 +5,7 @@
 \title{Substance Flow Computation}
 \usage{
 sfc(data, model, sample.size = 100, rand.seed = 123, check = TRUE,
-  inner = FALSE, flow.name = "PF")
+  inner = FALSE, flow.name = "PF", ...)
 }
 \arguments{
 \item{data}{a path for a ".csv" file or a data frame which contains
@@ -32,6 +32,9 @@ such as the input samples and the results for each sample.}
 \item{flow.name}{a single value of characters. It is the label or
 name of flow which will be used in the "model" file. The details
 of \code{flow.name} are given under "Details".}
+
+\item{...}{Further arguments to be passed to both \code{\link{read.csv}}
+and \code{\link{scan}}.}
 }
 \value{
 \code{sfc} returns a list which contains four objects: \code{result},
@@ -92,8 +95,12 @@ There are two important inputs in \code{sfc} function: \code{data}
 }
 \examples{
 library(sfc)
+## model as txt
 data <- system.file("extdata", "data_utf8.csv", package = "sfc")
 model <- system.file("extdata", "model_utf8.txt", package = "sfc")
-sfc(data, model, sample.size=100, rand.seed=123)
+sfc(data, model, sample.size = 100, rand.seed = 123, fileEncoding = "UTF-8")
+## model as csv
+model <- system.file("extdata", "model_utf8.csv", package = "sfc")
+sfc(data, model, sample.size = 1, fileEncoding = "UTF-8")
 }
 
