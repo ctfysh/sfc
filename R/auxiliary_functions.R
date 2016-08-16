@@ -86,45 +86,105 @@ imp <- function(x) {
     } %>% ungroup() %>% as.data.frame()
 }
 
+## Batch replacement
+gsubs <- function(pattern, replacement, x, ...) {
+  n <- length(pattern)
+  for (i in 1:n) {
+    x <- gsub(pattern[i], replacement[i], x, ...)
+  }
+  x
+}
+
 ## Model from txt to csv
-model_txt2csv <- function(txt) {
-  data.frame(FUN = txt) %>%
+model_txt2csv <- function(txt, replace = FALSE) {
+  n1_n01 <- function(n) {
+    substring(10 ^ max(nchar(n)) + n, 2)
+  }
+  d <- data.frame(FUN = txt) %>%
     mutate(FUN = ifelse(grepl("#", FUN),
                         gsub("(^#+ |^#+)", "", FUN),
                         gsub(" ", "", FUN))) %>%
-    separate(FUN, c("ID", "FUN"), "(=|<-)") %>%
-    mutate(ID = gsub("(\\[|,|\\,]|)", "", ID),
-           ID = gsub("(\"|')$", "", ID)) %>%
+    separate(FUN, c("FLOW", "FUN"), "(=|<-)") %>%
+    mutate(
+      ID = FLOW,
+      ID = gsub("(\\[|,|\\,]|)", "", ID),
+      ID = gsub("(\"|')$", "", ID)
+    ) %>%
     separate(ID, c("NAME", "START", "END"), "(\"|')+") %>%
     mutate(NAME = ifelse(
       !is.na(START) | !is.na(END),
       paste(NAME,
-            cumsum(!is.na(START) | !is.na(END)),
+            n1_n01(cumsum(
+              !is.na(START) | !is.na(END)
+            )),
             sep = "_"),
       NAME
     ))
+  p <- d %>% select(NAME, FLOW) %>% filter(FLOW != "") %>%
+    mutate(FLOW = gsubs(c("\\[", "\\]"), c("\\\\[", "\\\\]"), FLOW))
+  if (replace) {
+    d %>% mutate(FUN = gsubs(p$FLOW, p$NAME, FUN)) %>%
+      select(NAME, START, END, FUN)
+  } else{
+    d %>% select(NAME, START, END, FUN)
+  }
 }
 
 ## Model from csv to txt
-model_csv2txt <- function(csv, flow.name = "PF") {
-  csv %>% mutate(
-    ID = ifelse(
+model_csv2txt <- function(csv,
+                          flow.name = "PF",
+                          only.formula = TRUE) {
+  d <- csv %>% mutate(
+    FLOW = ifelse(
       !START %in% c("", NA) | !END %in% c("", NA),
-      paste0(flow.name,
-             "[\"",
-             START,
-             "\",\"",
-             END,
-             "\",]=",
-             NAME,
-             "=",
-             FUN),
-      ifelse(NAME != "",
-             paste("##", NAME),
-             "")
+      paste0(flow.name, "[\"", START, "\",\"", END, "\",]"),
+      ifelse(NAME != "", paste("##", NAME), "")
     ),
-    ID = gsub("'", "\"", ID)
-  ) %>% with(ID)
+    FUN = gsubs(NAME, FLOW, FUN),
+    FUN = ifelse(!FUN %in% c("", NA), paste0("<-", FUN), FUN)
+  )
+  if (only.formula) {
+    d %>% filter(!FUN %in% c("", NA)) %>% with(paste0(FLOW, FUN))
+  } else{
+    d %>% with(paste0(FLOW, FUN))
+  }
+}
+
+## Flow structure
+flow_str <- function(model) {
+  gsub_flow <- function(flow) {
+    gs <- paste(flow,
+                gsub("\\[.*?,", "\\[,", flow),
+                gsub(",.*?,", ",,", flow),
+                sep = "|")
+    gsubs(c("\\[", "\\]"), c("\\\\[", "\\\\]"), gs)
+  }
+  data.frame(FUN = model) %>%
+    filter(grepl("(=|<-)", FUN)) %>%
+    separate(FUN, c("FLOW", "FUN"), "(=|<-)") %>% {
+      d <- NULL
+      for (i in .$FLOW) {
+        d <- mutate(., FUN = grepl(gsub_flow(i), FUN)) %>%
+          filter(FUN) %>% mutate(START = i, END = FLOW) %>%
+          select(START, END) %>% rbind(d)
+      }
+      list(node = data.frame(NAME = .$FLOW), flow = d)
+    }
+}
+
+## Adjacency matrix
+adj_matrix <- function(node, flow) {
+  m <- matrix(0, length(node), length(node),
+              dimnames = list(node, node))
+  m[as.matrix(flow)] <- 1
+  m
+}
+
+## Flow order
+flow_order <- function(model) {
+  fs <- flow_str(model)
+  am <- adj_matrix(fs$node$NAME, fs$flow)
+  apply(sna::geodist(am, 0)$gdist, 2, max)
 }
 
 ## Round table

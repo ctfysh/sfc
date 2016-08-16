@@ -125,6 +125,7 @@ sfc <- function(data,
   }
   data <- imp(data)
   node <- data.frame(NAME = gnode(model))
+  model <- model[order(flow_order(model))]
   if (sample.size > 1) {
     r <- ua(data, node, model, sample.size, rand.seed, check, flow.name)
     if (inner) {

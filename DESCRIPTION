@@ -16,7 +16,8 @@ Imports:
     stats,
     utils,
     triangle,
-    zoo
+    zoo,
+    sna
 License: GPL
 URL: https://github.com/ctfysh/sfc
 BugReports: https://github.com/ctfysh/sfc/issues
