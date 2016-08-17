@@ -44,6 +44,13 @@ gnode <- function(x) {
   gsub("(\"|')", "", m)
 }
 
+## Get flow name
+gfname <- function(x) {
+  r <- gregexpr(pattern = "^.*?\\[", x)
+  m <- unique(unlist(regmatches(x, r)))
+  gsub("\\[", "", m)
+}
+
 ## Impute data
 imp <- function(x) {
   # require(dplyr, quietly = T, warn = F)

@@ -5,7 +5,7 @@
 \title{Substance Flow Computation}
 \usage{
 sfc(data, model, sample.size = 100, rand.seed = 123, check = TRUE,
-  inner = FALSE, flow.name = "PF", ...)
+  inner = FALSE, ...)
 }
 \arguments{
 \item{data}{a path for a ".csv" file or a data frame which contains
@@ -28,10 +28,6 @@ The details of \code{check} are given under "Details".}
 
 \item{inner}{logical. IF TRUE, the intermediate results will be returnd,
 such as the input samples and the results for each sample.}
-
-\item{flow.name}{a single value of characters. It is the label or
-name of flow which will be used in the "model" file. The details
-of \code{flow.name} are given under "Details".}
 
 \item{...}{Further arguments to be passed to both \code{\link{read.csv}}
 and \code{\link{scan}}.}
@@ -76,8 +72,15 @@ There are two important inputs in \code{sfc} function: \code{data}
    "i" is the start node and "j" is the end node. "DX" and "PX" represent
    activity data and parameters, respectively. They also correspond to the
    "NAME" field in the "data" file. "PF[i, j, ]" is an array which means the
-   flow from "i" to "j", while "PF" is the default flow name which can be
-   redefine by the argument \code{flow.name}. To keep the code easy and simple,
+   flow from "i" to "j", while "PF" is the default flow name. If you do not
+   like coding, this package provides another alternative: to write model as
+   into a ".csv" file. This file contains four critical fields: NAME, START,
+   END and FUN. They are required fields while you can add other optional fields
+   to make the model more readable freely. The NAME field is used to define
+   flow label, e.g. "PF_01" labels "PF[i, j, ]". The START and END field are
+   used to define the start node "i" and the end node "j" in "PF[i, j, ]".
+   The last one, "FUN" is used to define the formula to calculate the flow,
+   such as the righthand expression "DX * PX". To keep the code easy and simple,
    some auxiliary functions are supplied: \code{p}, \code{comp0}, \code{suma}
    and \code{rnone}. \code{p} is used to keep flow positive while the negative
    value will be set zero. \code{comp0} is used to change the value near zero
@@ -95,11 +98,14 @@ There are two important inputs in \code{sfc} function: \code{data}
 }
 \examples{
 library(sfc)
+
 ## model as txt
 data <- system.file("extdata", "data_utf8.csv", package = "sfc")
 model <- system.file("extdata", "model_utf8.txt", package = "sfc")
 sfc(data, model, sample.size = 100, rand.seed = 123, fileEncoding = "UTF-8")
+
 ## model as csv
+data <- system.file("extdata", "data_utf8.csv", package = "sfc")
 model <- system.file("extdata", "model_utf8.csv", package = "sfc")
 sfc(data, model, sample.size = 1, fileEncoding = "UTF-8")
 }
