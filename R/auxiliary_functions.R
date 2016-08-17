@@ -18,9 +18,6 @@ rnone <- function(n, x) {
   rep(x, n)
 }
 
-## Triangle function
-rtriangle <- triangle::rtriangle
-
 ## Declarations
 if (getRversion() >= "2.15.1") {
   utils::globalVariables(c(
@@ -125,7 +122,7 @@ model_txt2csv <- function(txt, replace = FALSE) {
   if (replace) {
     d %>% mutate(FUN = gsubs(p$FLOW, p$NAME, FUN)) %>%
       select(NAME, START, END, FUN)
-  } else{
+  } else {
     d %>% select(NAME, START, END, FUN)
   }
 }
@@ -145,13 +142,13 @@ model_csv2txt <- function(csv,
   )
   if (only.formula) {
     d %>% filter(!FUN %in% c("", NA)) %>% with(paste0(FLOW, FUN))
-  } else{
+  } else {
     d %>% with(paste0(FLOW, FUN))
   }
 }
 
 ## Flow structure
-flow_str <- function(model) {
+flow_str <- function(model, data = NULL) {
   gsub_flow <- function(flow) {
     gs <- paste(flow,
                 gsub("\\[.*?,", "\\[,", flow),
@@ -163,12 +160,22 @@ flow_str <- function(model) {
     filter(grepl("(=|<-)", FUN)) %>%
     separate(FUN, c("FLOW", "FUN"), "(=|<-)") %>% {
       d <- NULL
-      for (i in .$FLOW) {
-        d <- mutate(., FUN = grepl(gsub_flow(i), FUN)) %>%
+      if (is.null(data)) {
+        k <- .$FLOW
+      } else {
+        k <- c(.$FLOW, as.character(unique(data$NAME)))
+      }
+      for (i in k) {
+        if (grepl("\\[", i)) {
+          m <- gsub_flow(i)
+        } else {
+          m <- i
+        }
+        d <- mutate(., FUN = grepl(m, FUN)) %>%
           filter(FUN) %>% mutate(START = i, END = FLOW) %>%
           select(START, END) %>% rbind(d)
       }
-      list(node = data.frame(NAME = .$FLOW), flow = d)
+      list(node = data.frame(NAME = k), flow = d)
     }
 }
 
@@ -178,6 +185,15 @@ adj_matrix <- function(node, flow) {
               dimnames = list(node, node))
   m[as.matrix(flow)] <- 1
   m
+}
+
+## Node and flow from adjacency martrix
+node_flow <- function(adjmat) {
+  id <- which(adjmat != 0, arr.ind = TRUE)
+  node <- rownames(adjmat)
+  list(node = node,
+       flow = data.frame(START = node[id[, 1]],
+                         END = node[id[, 2]]))
 }
 
 ## Flow order

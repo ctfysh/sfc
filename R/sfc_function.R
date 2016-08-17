@@ -11,6 +11,7 @@
 #' @import tidyr
 #' @importFrom stats median quantile sd
 #' @importFrom utils read.csv
+#' @importFrom triangle rtriangle
 #' @name sfc-package
 NULL
 
@@ -112,13 +113,15 @@ sfc <- function(data,
   if (is.character(data)) {
     data <- read.csv(data, ...)
   }
-  if (any(grepl("*.csv$", model))) {
-    model <- read.csv(model, ...)
-  } else if (!any(grepl("(=|<-)", model))) {
-    model <- scan(model,
-                  character(),
-                  comment.char = "#",
-                  skipNul = TRUE)
+  if (is.character(model)) {
+    if (any(grepl("*.csv$", model))) {
+      model <- read.csv(model, ...)
+    } else if (!any(grepl("(=|<-)", model))) {
+      model <- scan(model,
+                    character(),
+                    comment.char = "#",
+                    skipNul = TRUE)
+    }
   }
   if (is.data.frame(model)) {
     model <- model_csv2txt(model, flow.name)
