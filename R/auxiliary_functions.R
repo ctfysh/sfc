@@ -190,7 +190,11 @@ flow_str <- function(model, data = NULL) {
 adj_matrix <- function(node, flow) {
   m <- matrix(0, length(node), length(node),
               dimnames = list(node, node))
-  m[as.matrix(flow)] <- 1
+  if (dim(flow)[2] == 2) {
+    m[as.matrix(flow)] <- 1
+  } else{
+    m[as.matrix(flow[, 1:2])] <- flow[, 3]
+  }
   m
 }
 
@@ -200,7 +204,8 @@ node_flow <- function(adjmat) {
   node <- rownames(adjmat)
   list(node = node,
        flow = data.frame(START = node[id[, 1]],
-                         END = node[id[, 2]]))
+                         END = node[id[, 2]],
+                         FLOW = adjmat[id]))
 }
 
 ## Flow order
