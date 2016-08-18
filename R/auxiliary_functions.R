@@ -138,7 +138,7 @@ model_txt2csv <- function(txt, replace = FALSE) {
 
 ## Model from csv to txt
 model_csv2txt <- function(csv,
-                          flow.name = "PF",
+                          flow.name = "FLOW",
                           only.formula = TRUE) {
   d <- csv %>% mutate(
     FLOW = ifelse(
@@ -256,7 +256,7 @@ rands <- function(x, n = 1) {
   u <- names(x)[grep("^C[0-9]", names(x))]
   v <- c("NAME", "TIME", "SITE", u)
   s <- sapply(1:nrow(x), function(i)
-    rand(x[i,], n))
+    rand(x[i, ], n))
   if (n == 1)
     data.frame(x[intersect(names(x), v)], X1 = s)
   else
@@ -283,19 +283,19 @@ run_flow <- function(data, model) {
   assign(f, array(0, c(length(node), length(node), nrow(dd)),
                   list(node, node, 1:nrow(dd))))
   # Computing
-  PF <- with(dd, {
+  flow <- with(dd, {
     eval(parse(text = model))
     get(f)
   })
   # Convert to matrix
-  PF <- as.data.frame(as.table(PF))
-  names(PF) <- c("START", "END", "ID", "FLOW")
-  PF <- PF %>% filter(abs(FLOW) > 1e-06)
-  PF$ID <- as.numeric(as.character(PF$ID))
+  flow <- as.data.frame(as.table(flow))
+  names(flow) <- c("START", "END", "ID", "FLOW")
+  flow <- flow %>% filter(abs(FLOW) > 1e-06)
+  flow$ID <- as.numeric(as.character(flow$ID))
   # Add TIME/SITE
   v <- c("ID", "TIME", "SITE", u, "SAMPLE")
   dd %>% select(one_of(intersect(names(.), v))) %>%
-    right_join(PF, "ID") %>% select(-ID)
+    right_join(flow, "ID") %>% select(-ID)
 }
 
 ## Uncertainty analysis
