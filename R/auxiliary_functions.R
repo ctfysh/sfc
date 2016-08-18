@@ -20,39 +20,41 @@ rnone <- function(n, x) {
 
 ## Declarations
 if (getRversion() >= "2.15.1") {
-  utils::globalVariables(c(
-    ".",
-    "CHECK",
-    "DATA",
-    "FLOW",
-    "FLOW0",
-    "ID",
-    "MEAN",
-    "NAME",
-    "SAMPLE",
-    "SD",
-    "START",
-    "END",
-    "FUN"
-  ))
+  utils::globalVariables(
+    c(
+      ".",
+      "CHECK",
+      "DATA",
+      "FLOW",
+      "FLOW0",
+      "ID",
+      "MEAN",
+      "NAME",
+      "SAMPLE",
+      "SD",
+      "START",
+      "END",
+      "FUN"
+    )
+  )
 }
 
-## Get nodes
-gnode <- function(x) {
+## Get node name
+node_name <- function(x) {
   r <- gregexpr(pattern = "(\"|').*?(\"|')", x)
   m <- unique(unlist(regmatches(x, r)))
   gsub("(\"|')", "", m)
 }
 
 ## Get flow name
-gfname <- function(x) {
+flow_name <- function(x) {
   r <- gregexpr(pattern = "^.*?\\[", x)
   m <- unique(unlist(regmatches(x, r)))
   gsub("\\[", "", m)
 }
 
 ## Impute data
-imp <- function(x) {
+impute_data <- function(x) {
   # require(dplyr, quietly = T, warn = F)
   # require(tidyr, quietly = T, warn = F)
   # function of locf
@@ -203,9 +205,11 @@ node_flow <- function(adjmat) {
   id <- which(adjmat != 0, arr.ind = TRUE)
   node <- rownames(adjmat)
   list(node = node,
-       flow = data.frame(START = node[id[, 1]],
-                         END = node[id[, 2]],
-                         FLOW = adjmat[id]))
+       flow = data.frame(
+         START = node[id[, 1]],
+         END = node[id[, 2]],
+         FLOW = adjmat[id]
+       ))
 }
 
 ## Flow order
@@ -252,7 +256,7 @@ rands <- function(x, n = 1) {
   u <- names(x)[grep("^C[0-9]", names(x))]
   v <- c("NAME", "TIME", "SITE", u)
   s <- sapply(1:nrow(x), function(i)
-    rand(x[i, ], n))
+    rand(x[i,], n))
   if (n == 1)
     data.frame(x[intersect(names(x), v)], X1 = s)
   else
@@ -260,7 +264,7 @@ rands <- function(x, n = 1) {
 }
 
 ## Calculation function
-cf <- function(d, n, model, f = "PF") {
+run_flow <- function(data, model) {
   # Array drop
   `[` <- function(..., drop = FALSE) {
     base::`[`(..., drop = drop)
@@ -268,14 +272,16 @@ cf <- function(d, n, model, f = "PF") {
   # Data manipulate
   # require(dplyr, quietly = T, warn = F)
   # require(tidyr, quietly = T)
-  u <- names(d)[grep("^C[0-9]", names(d))]
+  node <- node_name(model)
+  f <- flow_name(model)
+  u <- names(data)[grep("^C[0-9]", names(data))]
   v <- c("NAME", "TIME", "SITE", "DATA", u, "SAMPLE")
-  dd <- d %>% select(one_of(intersect(names(.), v))) %>%
+  dd <- data %>% select(one_of(intersect(names(.), v))) %>%
     mutate(ID = 1) %>% spread(NAME, DATA) %>%
     mutate(ID = 1:nrow(.))
   # Initial value
-  assign(f, array(0, c(nrow(n), nrow(n), nrow(dd)),
-                  list(n$NAME, n$NAME, 1:nrow(dd))))
+  assign(f, array(0, c(length(node), length(node), nrow(dd)),
+                  list(node, node, 1:nrow(dd))))
   # Computing
   PF <- with(dd, {
     eval(parse(text = model))
@@ -293,31 +299,29 @@ cf <- function(d, n, model, f = "PF") {
 }
 
 ## Uncertainty analysis
-ua <- function(d,
-               n,
-               model,
-               sample.size = 10,
-               rand.seed = 123,
-               check = FALSE,
-               f = "PF") {
+mcs_flow <- function(data,
+                     model,
+                     sample.size = 10,
+                     rand.seed = NULL,
+                     check = FALSE) {
   # require(dplyr, quietly = T, warn = F)
   # require(tidyr, quietly = T)
   # require(triangle, quietly = T)
   set.seed(rand.seed)
   # sampling
-  d1 <- d %>% rands(sample.size) %>%
+  data.sample <- data %>% rands(sample.size) %>%
     gather_("SAMPLE", "DATA", paste0("X", 1:sample.size)) %>%
     as.data.frame()
   # caculating
-  r <- cf(d1, n, model, f)
+  inner.result <- run_flow(data.sample, model)
   if (check) {
-    r <- cf(d, n, model, f) %>% check_flow(r)
+    inner.result <- run_flow(data, model) %>% check_flow(inner.result)
   }
   # sample size
-  m <- length(unique(r$SAMPLE))
+  sample.size <- length(unique(inner.result$SAMPLE))
   # summarizing
-  s <-
-    r %>% group_by_(.dots = setdiff(names(.), c("SAMPLE", "FLOW"))) %>%
+  result <- inner.result %>%
+    group_by_(.dots = setdiff(names(.), c("SAMPLE", "FLOW"))) %>%
     summarise(
       MEAN = mean(FLOW),
       MEDIAN = median(FLOW),
@@ -329,9 +333,9 @@ ua <- function(d,
       Q95 = quantile(FLOW, 0.95)
     ) %>% as.data.frame()
   list(
-    sample = d1,
-    inner = r,
-    sum = s,
-    num = m
+    result = result,
+    sample.size = sample.size,
+    data.sample = data.sample,
+    inner.result = inner.result
   )
 }

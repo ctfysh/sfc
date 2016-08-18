@@ -4,7 +4,7 @@
 \alias{sfc}
 \title{Substance Flow Computation}
 \usage{
-sfc(data, model, sample.size = 100, rand.seed = 123, check = TRUE,
+sfc(data, model, sample.size = 1, rand.seed = NULL, check = TRUE,
   inner = FALSE, ...)
 }
 \arguments{
@@ -102,11 +102,11 @@ library(sfc)
 ## model as txt
 data <- system.file("extdata", "data_utf8.csv", package = "sfc")
 model <- system.file("extdata", "model_utf8.txt", package = "sfc")
-sfc(data, model, sample.size = 100, rand.seed = 123, fileEncoding = "UTF-8")
+sfc(data, model, sample.size = 100, fileEncoding = "UTF-8")
 
 ## model as csv
 data <- system.file("extdata", "data_utf8.csv", package = "sfc")
 model <- system.file("extdata", "model_utf8.csv", package = "sfc")
-sfc(data, model, sample.size = 1, fileEncoding = "UTF-8")
+sfc(data, model, fileEncoding = "UTF-8")
 }
 
