@@ -76,7 +76,7 @@ imp <- function(x) {
                      x[, i])
   }
   x0 <- do.call(expand.grid, lapply(w, function(i)
-    unique(x[, i])))
+    unique(x[, i]))) %>% mutate_each(funs(as.character(.)))
   names(x0) <- w
   # result
   x[, c(w, w[-1])] %>% full_join(x0) %>%
@@ -192,7 +192,7 @@ adj_matrix <- function(node, flow) {
               dimnames = list(node, node))
   if (dim(flow)[2] == 2) {
     m[as.matrix(flow)] <- 1
-  } else{
+  } else {
     m[as.matrix(flow[, 1:2])] <- flow[, 3]
   }
   m
