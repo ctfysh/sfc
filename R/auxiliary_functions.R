@@ -48,7 +48,7 @@ node_name <- function(x) {
 
 ## Get flow name
 flow_name <- function(x) {
-  r <- gregexpr(pattern = "^.*?\\[", x)
+  r <- gregexpr(pattern = "[a-zA-Z]*?\\[", x)
   m <- unique(unlist(regmatches(x, r)))
   gsub("\\[", "", m)
 }
@@ -137,9 +137,10 @@ model_txt2csv <- function(txt, replace = FALSE) {
 }
 
 ## Model from csv to txt
-model_csv2txt <- function(csv,
-                          flow.name = "FLOW",
-                          only.formula = TRUE) {
+model_csv2txt <- function(csv, only.formula = TRUE) {
+  flow.name <- ifelse(length(flow_name(csv$FUN)),
+                      flow_name(csv$FUN),
+                      "FLOW")
   d <- csv %>% mutate(
     FLOW = ifelse(
       !START %in% c("", NA) | !END %in% c("", NA),
