@@ -126,7 +126,8 @@ sfc <- function(data,
       model <- scan(model,
                     character(),
                     comment.char = "#",
-                    skipNul = TRUE)
+                    skipNul = TRUE,
+                    ...)
     }
   }
   if (is.data.frame(model)) {
