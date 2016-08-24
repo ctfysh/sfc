@@ -1,5 +1,7 @@
 # sfc
 
+[![Build Status](https://travis-ci.org/ctfysh/sfc.svg?branch=master)](https://travis-ci.org/ctfysh/sfc)
+
 The R package **sfc** is a tool for substance flow computation, which can finally be used in substance flow analysis (SFA).
 
 ## Installation
