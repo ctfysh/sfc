@@ -1,27 +1,23 @@
 NAME,START,END,FUN
-XX系统XX流分析,,,
-作者：xx    整理者：xx,,,
-时间：xxxx年xx月xx日,,,
-------（以下是代码）------,,,
 ,,,
-磷矿石生产,,,
+P rock production,,,
 PF_01,R,Ch,DRP*PRP*PRR
 PF_02,R,W,DRP*PRP-PF_01
 ,,,
-磷化工生产,,,
+P chemical production,,,
 PF_03,Ch,Cr,DFP*PFP
 PF_04,Ch,H,DCP*PCP
 PF_05,W,Ch,PF_06*PCR
 PF_06,Ch,W,(PF_01-PF_03-PF_04)/(1-PCR)
 ,,,
-农作物生产,,,
+Crop production,,,
 PF_07,Cr,A,DMP*PMP*PHR
 PF_08,Cr,H,DMP*PMP*PNR
 PF_09,Cr,W,PF_03-PF_07-PF_08
 ,,,
-畜牧业生产,,,
+Animal production,,,
 PF_10,A,H,DAP*PAP*PAR
 PF_11,A,W,PF_07-PF_10
 ,,,
-人类消费,,,
+Human consumption,,,
 PF_12,H,W,PF_04+PF_08+PF_10

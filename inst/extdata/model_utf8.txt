@@ -1,26 +1,21 @@
-## XX系统XX流分析
-## 作者：xx    整理者：xx
-## 时间：xxxx年xx月xx日
-## ------（以下是代码）------
-
-## 磷矿石生产
+## P rock production
 PF["R","Ch",]=DRP*PRP*PRR
 PF["R","W",]=DRP*PRP-PF["R","Ch",]
 
-## 磷化工生产
+## P chemical production
 PF["Ch","Cr",]=DFP*PFP
 PF["Ch","H",]=DCP*PCP
 PF["Ch","W",]=(PF["R","Ch",]-PF["Ch","Cr",]-PF["Ch","H",])/(1-PCR)
 PF["W","Ch",]=PF["Ch","W",]*PCR
 
-## 农作物生产
+## Crop production
 PF["Cr","A",]=DMP*PMP*PHR
 PF["Cr","H",]=DMP*PMP*PNR
 PF["Cr","W",]=PF["Ch","Cr",]-PF["Cr","A",]-PF["Cr","H",]
 
-## 畜牧业生产
+## Animal production
 PF["A","H",]=DAP*PAP*PAR
 PF["A","W",]=PF["Cr","A",]-PF["A","H",]
 
-## 人类消费
+## Human consumption
 PF["H","W",]=PF["Ch","H",]+PF["Cr","H",]+PF["A","H",]
