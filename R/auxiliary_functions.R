@@ -78,15 +78,15 @@ impute_data <- function(x) {
                      x[, i])
   }
   x0 <- do.call(expand.grid, lapply(w, function(i)
-    unique(x[, i]))) %>% mutate_each(funs(as.character(.)))
+    unique(x[, i]))) %>% mutate(across(everything(), as.character))
   names(x0) <- w
   # result
   x[, c(w, w[-1])] %>% full_join(x0) %>%
-    group_by_(w[1]) %>% arrange_(w[-1]) %>%
+    group_by(across(w[1])) %>% arrange(across(w[-1])) %>%
     do(locf(., paste0(w[-1], ".1"))) %>% {
       names(x)[-1] <- paste0(names(x)[-1], ".1")
       left_join(., x)
-    } %>% select(-one_of(paste0(w[-1], ".1"))) %>% {
+    } %>% select(-any_of(paste0(w[-1], ".1"))) %>% {
       names(.) <- gsub("\\.1", "", names(.))
       .
     } %>% ungroup() %>% as.data.frame()
@@ -277,7 +277,7 @@ run_flow <- function(data, model) {
   f <- flow_name(model)
   u <- names(data)[grep("^C[0-9]", names(data))]
   v <- c("NAME", "TIME", "SITE", "DATA", u, "SAMPLE")
-  dd <- data %>% select(one_of(intersect(names(.), v))) %>%
+  dd <- data %>% select(any_of(intersect(names(.), v))) %>%
     mutate(ID = 1) %>% spread(NAME, DATA) %>%
     mutate(ID = 1:nrow(.))
   # Initial value
@@ -295,7 +295,7 @@ run_flow <- function(data, model) {
   flow$ID <- as.numeric(as.character(flow$ID))
   # Add TIME/SITE
   v <- c("ID", "TIME", "SITE", u, "SAMPLE")
-  dd %>% select(one_of(intersect(names(.), v))) %>%
+  dd %>% select(any_of(intersect(names(.), v))) %>%
     right_join(flow, "ID") %>% select(-ID)
 }
 
@@ -311,7 +311,11 @@ mcs_flow <- function(data,
   set.seed(rand.seed)
   # sampling
   data.sample <- data %>% rands(sample.size) %>%
-    gather_("SAMPLE", "DATA", paste0("X", 1:sample.size)) %>%
+    pivot_longer(
+    cols = starts_with("X"),
+    names_to = "SAMPLE",
+    values_to = "DATA"
+  ) %>%
     as.data.frame()
   # caculating
   inner.result <- run_flow(data.sample, model)
@@ -322,7 +326,7 @@ mcs_flow <- function(data,
   sample.size <- length(unique(inner.result$SAMPLE))
   # summarizing
   result <- inner.result %>%
-    group_by_(.dots = setdiff(names(.), c("SAMPLE", "FLOW"))) %>%
+    group_by(pick(setdiff(names(.), c("SAMPLE", "FLOW")))) %>%
     summarise(
       MEAN = mean(FLOW),
       MEDIAN = median(FLOW),
